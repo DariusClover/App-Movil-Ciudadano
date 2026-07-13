@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "app-movil-ciudadano",
-    "slug": "app-movil-ciudadano",
+    "name": "App Movil Ciudadano",
+    "slug": "App-Movil-Ciudadano",
+    "scheme": "appciudadano",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,18 +13,52 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.universidad.appciudadano",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos tu ubicación solo para indicar la ruta de recolección más cercana. No se envía a ningún servidor."
+      }
     },
     "android": {
+      "package": "com.universidad.appciudadano",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBnI_BHC-hv5-qpfr-ScfsY9I34N5h9T9w"
+        }
       }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos tu ubicación solo para indicar la ruta de recolección más cercana."
+        }
+      ],
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "AIzaSyBnI_BHC-hv5-qpfr-ScfsY9I34N5h9T9w"
+        }
+      ]
+    ]
   }
 }

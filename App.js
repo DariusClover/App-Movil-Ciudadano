@@ -1,20 +1,16 @@
+import React from "react";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { UbicacionProvider } from "./src/context/UbicacionContext";
+import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text> Hola mundo</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <UbicacionProvider>
+        <StatusBar style="dark" />
+        <AppNavigator />
+      </UbicacionProvider>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#e0b4b4",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
