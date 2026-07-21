@@ -113,14 +113,23 @@ export function useRecorridosActivos() {
               cargarInicial().catch(() => setEstaActualizado(false));
               return prev;
             }
+            const actual = prev[idx];
+            const velocidadNueva =
+              row.velocidad_ms != null && Number.isFinite(Number(row.velocidad_ms))
+                ? Number(row.velocidad_ms)
+                : null;
+            // Conservar última velocidad conocida si el GPS manda null temporalmente.
+            const velocidadMs =
+              velocidadNueva != null ? velocidadNueva : actual.velocidadMs ?? null;
+
             const copy = [...prev];
             copy[idx] = {
-              ...copy[idx],
-              latitud: row.latitud,
-              longitud: row.longitud,
-              velocidadMs: row.velocidad_ms,
-              timestampCaptura: row.timestamp_captura,
-              updatedAt: row.updated_at,
+              ...actual,
+              latitud: row.latitud ?? actual.latitud ?? null,
+              longitud: row.longitud ?? actual.longitud ?? null,
+              velocidadMs,
+              timestampCaptura: row.timestamp_captura ?? actual.timestampCaptura ?? null,
+              updatedAt: row.updated_at ?? actual.updatedAt ?? null,
             };
             return copy;
           });

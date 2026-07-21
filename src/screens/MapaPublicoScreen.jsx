@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -42,35 +42,35 @@ export default function MapaPublicoScreen({ navigation }) {
   const {
     coordenadas,
     obtenerUbicacion,
-    solicitarUbicacionAlInicio,
     cargando: cargandoUbicacion,
     permisoDenegado,
     error: errorUbicacion,
   } = useUbicacionContext();
   const {
+    rutasCercanas,
     rutaMasCercana,
     cargando: cargandoCercana,
     error: errorCercana,
     buscarRutaCercana,
   } = useRutaCercana();
 
-  const [seleccionado, setSeleccionado] = useState(null);
+  /** Solo el id: las métricas se leen siempre del marcador live en `marcadores`. */
+  const [seleccionadoId, setSeleccionadoId] = useState(null);
   const [centrandoEnMi, setCentrandoEnMi] = useState(false);
 
-  // Opción A: una lectura al abrir solo para centrar el mapa (coords locales).
-  useEffect(() => {
-    solicitarUbicacionAlInicio().catch(() => {
-      // permiso denegado / error: el mapa usa fallback Buenaventura
-    });
-  }, [solicitarUbicacionAlInicio]);
+  const seleccionadoLive = useMemo(() => {
+    if (!seleccionadoId) return null;
+    return marcadores.find((m) => m.recorridoId === seleccionadoId) ?? null;
+  }, [marcadores, seleccionadoId]);
 
+  /** Distancia PostGIS del camión seleccionado (RPC), no solo del “más cercano”. */
   const distanciaSeleccionada = useMemo(() => {
-    if (!seleccionado || !rutaMasCercana) return null;
-    if (rutaMasCercana.recorrido_id === seleccionado.recorridoId) {
-      return rutaMasCercana.distancia_km ?? null;
-    }
-    return null;
-  }, [seleccionado, rutaMasCercana]);
+    if (!seleccionadoId || !rutasCercanas?.length) return null;
+    const match = rutasCercanas.find((r) => r.recorrido_id === seleccionadoId);
+    if (match?.distancia_km == null) return null;
+    const km = Number(match.distancia_km);
+    return Number.isFinite(km) ? km : null;
+  }, [seleccionadoId, rutasCercanas]);
 
   const velocidadCercana = useMemo(() => {
     if (!rutaMasCercana?.recorrido_id) return null;
@@ -80,16 +80,28 @@ export default function MapaPublicoScreen({ navigation }) {
     return match?.velocidadMs ?? null;
   }, [rutaMasCercana, marcadores]);
 
+  const onSeleccionarMarcador = async (marcador) => {
+    if (!marcador?.recorridoId) return;
+    setSeleccionadoId(marcador.recorridoId);
+
+    // Si ya hay coords (FAB o ruta cercana previa), refrescar distancias RPC
+    // para poder mostrar ETA del camión seleccionado.
+    const punto = coordenadas;
+    if (!punto) return;
+    try {
+      await buscarRutaCercana(punto.latitud, punto.longitud);
+    } catch {
+      // error ya expuesto por el hook
+    }
+  };
+
   const onSolicitarRutaCercana = async () => {
     const punto = coordenadas || (await obtenerUbicacion({ forzar: true }));
     if (!punto) return;
     try {
       const lista = await buscarRutaCercana(punto.latitud, punto.longitud);
       if (lista?.[0]?.recorrido_id) {
-        const match = marcadores.find(
-          (m) => m.recorridoId === lista[0].recorrido_id,
-        );
-        if (match) setSeleccionado(match);
+        setSeleccionadoId(lista[0].recorrido_id);
       }
     } catch {
       // error ya expuesto por el hook
@@ -139,8 +151,8 @@ export default function MapaPublicoScreen({ navigation }) {
         <MapaRecorridos
           ref={mapaRef}
           marcadores={marcadores}
-          seleccionadoId={seleccionado?.recorridoId}
-          onSeleccionar={setSeleccionado}
+          seleccionadoId={seleccionadoId}
+          onSeleccionar={onSeleccionarMarcador}
           ubicacionCiudadano={coordenadas}
         />
         <TouchableOpacity
@@ -172,9 +184,9 @@ export default function MapaPublicoScreen({ navigation }) {
         ) : null}
 
         <TarjetaRuta
-          marcador={seleccionado}
+          marcador={seleccionadoLive}
           distanciaKm={distanciaSeleccionada}
-          onCerrar={() => setSeleccionado(null)}
+          onCerrar={() => setSeleccionadoId(null)}
           onVerDetalle={(m) =>
             navigation.navigate("DetalleRuta", {
               marcador: m,

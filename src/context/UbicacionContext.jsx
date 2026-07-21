@@ -8,7 +8,6 @@ const UbicacionContext = createContext({
   error: null,
   permisoDenegado: false,
   obtenerUbicacion: async () => null,
-  solicitarUbicacionAlInicio: async () => null,
 });
 
 export function UbicacionProvider({ children }) {

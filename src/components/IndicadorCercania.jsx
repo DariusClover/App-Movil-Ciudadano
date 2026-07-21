@@ -17,6 +17,15 @@ export default function IndicadorCercania({
     ? calcularEtaDesdeDistancia(rutaMasCercana.distancia_km, velocidadMsCamion)
     : null;
 
+  const sufijoEta =
+    eta && eta.estado === "ok"
+      ? ` · ETA ${eta.texto}`
+      : eta && eta.estado === "detenido"
+        ? ` · ${eta.texto}`
+        : eta && eta.estado === "sin_velocidad"
+          ? ` · ${eta.texto}`
+          : "";
+
   return (
     <View style={styles.wrap}>
       <TouchableOpacity
@@ -49,9 +58,7 @@ export default function IndicadorCercania({
           <Text style={styles.badgeMeta}>
             {rutaMasCercana.placa_vehiculo || "Camión"} ·{" "}
             {formatearDistancia(rutaMasCercana.distancia_km)}
-            {eta?.minutos != null
-              ? ` · ETA ${eta.texto}${eta.esEstimado ? " (est.)" : ""}`
-              : ""}
+            {sufijoEta}
           </Text>
         </View>
       ) : null}
