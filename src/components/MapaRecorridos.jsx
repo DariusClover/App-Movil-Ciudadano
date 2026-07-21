@@ -1,14 +1,15 @@
 import React, {
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
 } from "react";
 import { StyleSheet, View } from "react-native";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import { shapeACoordenadasMapa } from "../utils/formatters";
+import MarcadorCamionAnimado from "./MarcadorCamionAnimado";
 
+/** Fallback regional si el usuario aún no ha pedido ubicación (Buenaventura). */
 const REGION_DEFAULT = {
   latitude: 3.8801,
   longitude: -77.0312,
@@ -19,8 +20,8 @@ const REGION_DEFAULT = {
 const DELTA_CERCANO = { latitudeDelta: 0.06, longitudeDelta: 0.06 };
 
 /**
- * Solo renderiza marcadores y polylines. El estado vive en el hook.
- * Prioridad de cámara: usuario → primer camión live → Buenaventura.
+ * Solo renderiza marcadores animados y polylines. El estado vive en el hook.
+ * Prioridad de cámara inicial: usuario (solo tras FAB) → primer camión → Buenaventura.
  * Expone centrarEnUsuario({ latitud, longitud }) vía ref.
  */
 const MapaRecorridos = forwardRef(function MapaRecorridos(
@@ -28,7 +29,6 @@ const MapaRecorridos = forwardRef(function MapaRecorridos(
   ref,
 ) {
   const mapRef = useRef(null);
-  const yaCentramosUsuario = useRef(false);
 
   const animarA = (latitud, longitud, duracionMs = 600) => {
     if (!mapRef.current || latitud == null || longitud == null) return;
@@ -69,13 +69,6 @@ const MapaRecorridos = forwardRef(function MapaRecorridos(
     return REGION_DEFAULT;
   }, [marcadores, ubicacionCiudadano]);
 
-  useEffect(() => {
-    if (!ubicacionCiudadano || !mapRef.current) return;
-    if (yaCentramosUsuario.current) return;
-    yaCentramosUsuario.current = true;
-    animarA(ubicacionCiudadano.latitud, ubicacionCiudadano.longitud, 600);
-  }, [ubicacionCiudadano]);
-
   return (
     <View style={styles.wrap}>
       <MapView
@@ -106,13 +99,12 @@ const MapaRecorridos = forwardRef(function MapaRecorridos(
                 />
               ) : null}
               {m.latitud != null && m.longitud != null ? (
-                <Marker
-                  coordinate={{
-                    latitude: m.latitud,
-                    longitude: m.longitud,
-                  }}
-                  title={m.vehiculo?.placa || "Camión"}
-                  description={m.ruta?.nombre_ruta || "Ruta activa"}
+                <MarcadorCamionAnimado
+                  recorridoId={m.recorridoId}
+                  latitud={m.latitud}
+                  longitud={m.longitud}
+                  titulo={m.vehiculo?.placa || "Camión"}
+                  descripcion={m.ruta?.nombre_ruta || "Ruta activa"}
                   pinColor={
                     seleccionadoId === m.recorridoId ? "#00A86B" : "#1A365D"
                   }

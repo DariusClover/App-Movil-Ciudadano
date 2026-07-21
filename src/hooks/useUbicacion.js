@@ -2,8 +2,9 @@ import { useCallback, useRef, useState } from "react";
 import * as Location from "expo-location";
 
 /**
- * Obtiene la ubicación del ciudadano una sola vez (o reutiliza la ya obtenida).
+ * Obtiene la ubicación del ciudadano solo bajo demanda (FAB / ruta cercana).
  * Nunca hace tracking continuo ni persiste coords en servidor.
+ * No solicita permiso al montar la app.
  */
 export function useUbicacion() {
   const [coordenadas, setCoordenadas] = useState(null);
@@ -11,7 +12,6 @@ export function useUbicacion() {
   const [error, setError] = useState(null);
   const [permisoDenegado, setPermisoDenegado] = useState(false);
   const solicitudEnCurso = useRef(false);
-  const bootSolicitado = useRef(false);
 
   const obtenerUbicacion = useCallback(async ({ forzar = false } = {}) => {
     if (!forzar && coordenadas) {
@@ -56,18 +56,6 @@ export function useUbicacion() {
     }
   }, [coordenadas]);
 
-  /**
-   * Una sola lectura al abrir la app para centrar el mapa.
-   * No dispara el RPC ni envía coords a Supabase.
-   */
-  const solicitarUbicacionAlInicio = useCallback(async () => {
-    if (bootSolicitado.current) {
-      return coordenadas;
-    }
-    bootSolicitado.current = true;
-    return obtenerUbicacion({ forzar: true });
-  }, [coordenadas, obtenerUbicacion]);
-
   return {
     coordenadas,
     tieneUbicacion: !!coordenadas,
@@ -75,6 +63,5 @@ export function useUbicacion() {
     error,
     permisoDenegado,
     obtenerUbicacion,
-    solicitarUbicacionAlInicio,
   };
 }

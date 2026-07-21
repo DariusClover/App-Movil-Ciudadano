@@ -76,12 +76,12 @@ export default function DetalleRutaScreen({ route }) {
           {formatearHora(marcador.updatedAt || marcador.timestampCaptura)}
         </Text>
         {distanciaKm != null ? (
-          <Text style={styles.row}>
-            Distancia: {formatearDistancia(distanciaKm)}
-            {eta.minutos != null
-              ? ` · ETA ${eta.texto}${eta.esEstimado ? " (estimado)" : ""}`
-              : ""}
-          </Text>
+          <>
+            <Text style={styles.row}>
+              Distancia: {formatearDistancia(distanciaKm)}
+            </Text>
+            <Text style={styles.row}>Llegada aprox.: {eta.texto}</Text>
+          </>
         ) : null}
 
         <View style={styles.mapBox}>

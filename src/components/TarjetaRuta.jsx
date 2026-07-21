@@ -41,18 +41,26 @@ export default function TarjetaRuta({
         En ruta: {formatearDuracion(marcador.fechaInicio)}
       </Text>
       <Text style={styles.meta}>
-        Actualizado: {formatearHora(marcador.updatedAt || marcador.timestampCaptura)}
+        Actualizado:{" "}
+        {formatearHora(marcador.updatedAt || marcador.timestampCaptura)}
       </Text>
       {distanciaKm != null ? (
-        <Text style={styles.meta}>
-          Distancia: {formatearDistancia(distanciaKm)}
-          {eta.minutos != null
-            ? ` · ETA ${eta.texto}${eta.esEstimado ? " (est.)" : ""}`
-            : ""}
+        <>
+          <Text style={styles.meta}>
+            Distancia: {formatearDistancia(distanciaKm)}
+          </Text>
+          <Text style={styles.meta}>Llegada aprox.: {eta.texto}</Text>
+        </>
+      ) : (
+        <Text style={styles.hint}>
+          Usa “Ruta más cercana” o tu ubicación para ver distancia y ETA.
         </Text>
-      ) : null}
+      )}
       {onVerDetalle ? (
-        <TouchableOpacity style={styles.btn} onPress={() => onVerDetalle(marcador)}>
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() => onVerDetalle(marcador)}
+        >
           <Text style={styles.btnText}>Ver detalle</Text>
         </TouchableOpacity>
       ) : null}
@@ -78,6 +86,7 @@ const styles = StyleSheet.create({
   cerrar: { color: "#718096", fontSize: 13 },
   ruta: { fontSize: 15, color: "#2D3748", marginTop: 2 },
   meta: { fontSize: 13, color: "#718096" },
+  hint: { fontSize: 12, color: "#A0AEC0", marginTop: 4 },
   btn: {
     marginTop: 10,
     backgroundColor: "#00A86B",

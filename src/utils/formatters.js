@@ -47,32 +47,72 @@ export function formatearVelocidadKmh(velocidadMs) {
   return `${kmh.toFixed(0)} km/h`;
 }
 
+/** Umbral mínimo de velocidad (m/s) para considerar movimiento (~0.18 km/h). */
+const VELOCIDAD_MINIMA_MS = 0.05;
+
 /**
- * ETA a partir de distancia (km) y velocidad (m/s).
- * No calcula distancia geográfica: usa el km del RPC.
- * Fallback 15 km/h si no hay velocidad usable.
- * @returns {{ texto: string, esEstimado: boolean, minutos: number|null }}
+ * ETA por movimiento rectilíneo uniforme:
+ *   t_s = (distancia_km * 1000) / velocidad_ms
+ *   t_min = round(t_s / 60)
+ *
+ * @returns {{
+ *   texto: string,
+ *   minutos: number|null,
+ *   estado: 'sin_dato'|'sin_velocidad'|'detenido'|'ok',
+ *   esEstimado: boolean
+ * }}
  */
 export function calcularEtaDesdeDistancia(distanciaKm, velocidadMs) {
-  if (distanciaKm == null || !Number.isFinite(Number(distanciaKm)) || Number(distanciaKm) < 0) {
-    return { texto: "—", esEstimado: false, minutos: null };
+  if (
+    distanciaKm == null ||
+    !Number.isFinite(Number(distanciaKm)) ||
+    Number(distanciaKm) < 0
+  ) {
+    return {
+      texto: "—",
+      minutos: null,
+      estado: "sin_dato",
+      esEstimado: false,
+    };
   }
-  const km = Number(distanciaKm);
-  let kmh = null;
-  let esEstimado = false;
-  if (velocidadMs != null && Number.isFinite(Number(velocidadMs)) && Number(velocidadMs) > 0.3) {
-    kmh = Number(velocidadMs) * 3.6;
-  } else {
-    kmh = 15;
-    esEstimado = true;
+
+  if (
+    velocidadMs == null ||
+    !Number.isFinite(Number(velocidadMs)) ||
+    Number(velocidadMs) < 0
+  ) {
+    return {
+      texto: "Sin velocidad GPS",
+      minutos: null,
+      estado: "sin_velocidad",
+      esEstimado: false,
+    };
   }
-  const horas = km / kmh;
-  const minutos = Math.max(1, Math.round(horas * 60));
+
+  const v = Number(velocidadMs);
+  if (v < VELOCIDAD_MINIMA_MS) {
+    return {
+      texto: "Detenido",
+      minutos: null,
+      estado: "detenido",
+      esEstimado: false,
+    };
+  }
+
+  const distanciaMetros = Number(distanciaKm) * 1000;
+  const segundos = distanciaMetros / v;
+  const minutos = Math.max(1, Math.round(segundos / 60));
   const texto =
     minutos < 60
       ? `~${minutos} min`
       : `~${Math.floor(minutos / 60)} h ${minutos % 60} min`;
-  return { texto, esEstimado, minutos };
+
+  return {
+    texto,
+    minutos,
+    estado: "ok",
+    esEstimado: false,
+  };
 }
 
 /**
